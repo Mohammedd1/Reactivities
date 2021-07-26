@@ -1,12 +1,15 @@
 import React, { Fragment, useEffect, useState } from 'react';
-import axios from 'axios';
+// import axios from 'axios';
 import { Container } from 'semantic-ui-react';
 import { Activity } from '../models/activity';//added after adding activity.ts interface
 import NavBar from '../layout/NavBar';
 import ActivityDashboard from '../../features/activities/dashboard/ActivityDashboard';
 //uuid package
 import { v4 as uuid } from 'uuid';
-
+import { Agent } from 'https';
+import agent from '../api/agent';
+import { isForInStatement } from 'typescript';
+import LoadingComponent from '../layout/LoadingComponent'
 function App() {
 
   //const [activities, setActivities] = useState([]);
@@ -14,15 +17,36 @@ function App() {
   //View selected activity
   const [selectedActivity, setSelectedActivity] = useState<Activity | undefined>(undefined);//(undefined is the initial value)
   //edit mode
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(false);//set initially to false
+  //state for Loading
+  const [loading, setLoading] = useState(true);//set initially to true
+  //state of submitting
+  const [submitting, setSubmitting] = useState(false);//set initially to false
 
   useEffect(() => {
     //calling get activities API
     //we changed axios.get('http://localhost:5000/api/activities'). to get type safety
-    axios.get<Activity[]>('http://localhost:5000/api/activities').then(response => {
-      console.log(response);
-      setActivities(response.data);
-    })
+    //we comment the below when we start using axios section
+    // axios.get<Activity[]>('http://localhost:5000/api/activities').then(response => {
+    //   setActivities(response.data);
+    // })
+    // agent.Activities.list().then(response=>{
+    //   setActivities(response);
+    // });
+
+    //after adding input type=date to input field in form,it won't display the date that returns from activities becuase it is in different format 
+    //so we need to reformat the date that returns from database
+    agent.Activities.list().then(response => {
+      //create a new array of Activity 
+      let activities: Activity[] = [];
+      response.forEach(activity => {
+        activity.date = activity.date.split('T')[0];//split at T and get the first peice
+        activities.push(activity);
+      })
+      setActivities(activities);
+      setLoading(false);//trun off loading indicator
+    });
+
   }, [])
 
   function handleSelectActivity(id: string) {
@@ -41,7 +65,7 @@ function App() {
     setEditMode(false);
   }
   function handleCreateOreditActivity(activity: Activity) {
-    //check if we have activity id:yes means update, no means create
+    /*//check if we have activity id:yes means update, no means create
     activity.id ?
       //[...activities.filter(x => x.id !== activity.id), activity] removing the activity from the activities list and add 
       //the update activity
@@ -50,12 +74,42 @@ function App() {
       : setActivities([...activities, { ...activity, id: uuid() }]);
     setEditMode(false);
     //displaying the new activity
-    setSelectedActivity(activity);
+    setSelectedActivity(activity);*/
+
+    //Section 6 - posting datat to the server
+    setSubmitting(true);
+    if (activity.id) {
+      agent.Activities.update(activity).then(() => {
+        setActivities([...activities.filter(x => x.id !== activity.id), activity])
+        setSelectedActivity(activity);
+        setEditMode(false);
+        setSubmitting(false);
+      })
+    }
+    else {
+      activity.id = uuid();
+      agent.Activities.create(activity).then(() => {
+        setActivities([...activities, activity]);
+        setSelectedActivity(activity);
+        setEditMode(false);
+        setSubmitting(false);
+      })
+    }
   }
 
   function handleDeleteActivity(id: string) {
-    setActivities([...activities.filter(x => x.id !== id)]);
+    //setActivities([...activities.filter(x => x.id !== id)]);
+    //delete activity on the server
+    setSubmitting(true);
+    agent.Activities.delete(id).then(()=>{
+      setActivities([...activities.filter(x => x.id !== id)]);
+      setSubmitting(false);
+    })
   }
+
+  //check if we are loading before returning the jsx in the below return.
+  if (loading) return <LoadingComponent content='loading app' />
+
   return (
     //the below lines looks like html but they are not, they are jsx(JavaScript XML)
     // <div className="App">
@@ -103,6 +157,7 @@ function App() {
           closeForm={handleFormClose}
           createOrEdit={handleCreateOreditActivity}
           deleteActivity={handleDeleteActivity}
+          submitting={submitting}
         />
       </Container>
       {/* </div> */}

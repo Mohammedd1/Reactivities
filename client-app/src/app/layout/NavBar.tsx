@@ -1,11 +1,10 @@
 import React from 'react';//all react compnents imported from react,react components are react function that returns jsx
 import { Button, Container, Menu } from 'semantic-ui-react';
+import { useStore } from '../stores/store';
 
-interface Props {
-    openForm: () => void;
-}
-
-export default function NavBar({openForm}: Props) {
+export default function NavBar() {
+    const{activityStore}=useStore();
+    
     // return in the below will return a jsx 
     return (
         <Menu inverted fixed='top'>
@@ -17,7 +16,7 @@ export default function NavBar({openForm}: Props) {
                 </Menu.Item>
                 <Menu.Item name ='Activities'/>
                 <Menu.Item>
-                    <Button onClick={openForm} positive content='Create Activity'/>{/*positive=green button*/}
+                    <Button onClick={()=>activityStore.openForm()} positive content='Create Activity'/>{/*positive=green button*/}
                 </Menu.Item>
             </Container>
         </Menu>

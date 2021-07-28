@@ -1,5 +1,4 @@
 import axios, { AxiosResponse } from 'axios';
-import { promises } from 'dns';
 import { Activity } from '../models/activity';
 
 //Method to add some sleep to show loading

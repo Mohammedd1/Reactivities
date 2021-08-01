@@ -8,6 +8,7 @@ import { useStore } from '../../../app/stores/store';
 import ActivityList from '../dashboard/ActivityList';
 // import ActivityDetails from '../details/ActivityDetails';
 // import ActivityForm from '../form/ActivityForm';
+import ActivityFilters from '../dashboard/ActivityFilters';
 
 //specify an intyerface for properties,this will be standard for any component we create.
 // interface Props {
@@ -56,7 +57,7 @@ export default observer(function ActivityDashboard() {
                     // submitting={submitting} />
                 } */}
 
-                <h2>Activity filters</h2>
+                <ActivityFilters/>
             </GridColumn>
         </Grid>
     )

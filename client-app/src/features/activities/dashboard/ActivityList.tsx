@@ -3,11 +3,12 @@ import { observer } from 'mobx-react-lite';
 import React from 'react'
 import { SyntheticEvent } from 'react';
 import { useState } from 'react'
+import { Link } from 'react-router-dom';
 import { Button, Item, Label, Segment } from 'semantic-ui-react'
 // import { Activity } from '../../../app/models/activity'
 import { useStore } from '../../../app/stores/store';
 
-//specify an intyerface for properties,this will be standard for any component we create.
+//specify an interface for properties,this will be standard for any component we create.
 // interface Props {
 //     activities: Activity[];
 //     // selectActivity: (id: string) => void;
@@ -41,7 +42,9 @@ export default observer(function ActivityList() {
                             </Item.Description>
                             <Item.Extra>
                                 {/* ()=>selectActivity(activity.id) will render the function when we click on the button,this to avoid error */}
-                                <Button onClick={() => activityStore.selectActivity(activity.id)} floated='right' content='View' color='blue' />
+                                {/* <Button onClick={() => activityStore.selectActivity(activity.id)} floated='right' content='View' color='blue' /> */}
+                                {/*Passing id to activity details id*/}
+                                <Button as={Link} to={`/activities/${activity.id}`} floated='right' content='View' color='blue' />
                                 {/*we adding name property to the below button to give each button a uniqure name
                                 and this to prevent other delete button from showin the loading spinner only 
                                 show it on the clicked button*/}

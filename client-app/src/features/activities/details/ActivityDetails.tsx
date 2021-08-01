@@ -1,8 +1,12 @@
 import React from 'react';
-import { Activity } from '../../../app/models/activity';
+// import { Activity } from '../../../app/models/activity';
 import { Button, Card, Image } from 'semantic-ui-react';
 import { useStore } from '../../../app/stores/store';
 import LoadingComponent from '../../../app/layout/LoadingComponent';
+import { Link, useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { observer } from 'mobx-react-lite';
+
 
 // interface Props {
 //     activity: Activity;
@@ -10,11 +14,19 @@ import LoadingComponent from '../../../app/layout/LoadingComponent';
 //     openForm: (id: string) => void;
 // }
 
-export default function ActivityDetails() {
+export default observer(function ActivityDetails() {
     const { activityStore } = useStore();
-    const { selectedActivity: activity,openForm,cancelSelectedActivity } = activityStore;
+    const { selectedActivity: activity,loadActivity,loadingInitial } = activityStore;
 
-    if(!activity) return <LoadingComponent/>;//we should return jsx element here,this will not return any thing,because we are
+    //using route parameters
+    const { id } = useParams<{ id: string }>();
+    // we want to side effect to occur when we load this particular component.
+    useEffect(() => {
+        if (id) loadActivity(id);
+    },[id,loadActivity]);//id and loadActivity here are dependencies
+
+
+    if (loadingInitial || !activity) return <LoadingComponent />;//we should return jsx element here,this will not return any thing,because we are
     // not oding anything to load activity at this stage
     return (
         <Card fluid>
@@ -31,11 +43,11 @@ export default function ActivityDetails() {
             </Card.Content>
             <Card.Content extra>
                 <Button.Group width='2'>
-                    <Button onClick={() => openForm(activity.id)} basic color='blue' content='Edit' />
+                    <Button as={Link} to={`/manage/${activity.id}`} basic color='blue' content='Edit' />
                     {/* below we don't need to use ()=> because we don't pass any parameter to the function */}
-                    <Button onClick={cancelSelectedActivity} basic color='grey' content='Cancel' />
+                    <Button as={Link} to='/activities' basic color='grey' content='Cancel' />
                 </Button.Group>
             </Card.Content>
         </Card>
     )
-}
+})

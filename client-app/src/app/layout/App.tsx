@@ -1,6 +1,7 @@
-import React, { Fragment, useEffect, useState } from 'react';
+// import React, { Fragment, useEffect, useState } from 'react';
+import { Fragment } from 'react';
 // import axios from 'axios';
-import {  Container } from 'semantic-ui-react';
+import { Container } from 'semantic-ui-react';
 //import { Activity } from '../models/activity';//added after adding activity.ts interface
 import NavBar from '../layout/NavBar';
 import ActivityDashboard from '../../features/activities/dashboard/ActivityDashboard';
@@ -9,12 +10,19 @@ import ActivityDashboard from '../../features/activities/dashboard/ActivityDashb
 // import { Agent } from 'https';
 //import agent from '../api/agent';
 // import { isForInStatement } from 'typescript';
-import LoadingComponent from '../layout/LoadingComponent'
-import { useStore } from '../stores/store';
+// import LoadingComponent from '../layout/LoadingComponent'
+// import { useStore } from '../stores/store';
 import { observer } from 'mobx-react-lite';
+import { Route, useLocation } from 'react-router-dom';
+import ActivityForm from '../../features/activities/form/ActivityForm';
+
+import HomePage from '../../features/home/HomePage';
+import ActivityDetails from '../../features/activities/details/ActivityDetails';
 function App() {
+  //loading sppineer is appearing on each compoents,we we will remove it form here and paste it inside activty dashboard 1,2 and 3
   //using MobX store,hook in store.ts file
-  const { activityStore } = useStore();
+  //1
+  //const { activityStore } = useStore();
 
   //local states
   //const [activities, setActivities] = useState([]);
@@ -29,33 +37,34 @@ function App() {
   //state of submitting
   //const [submitting, setSubmitting] = useState(false);//set initially to false
 
-  useEffect(() => {
-    //calling get activities API
-    //we changed axios.get('http://localhost:5000/api/activities'). to get type safety
-    //we comment the below when we start using axios section
-    // axios.get<Activity[]>('http://localhost:5000/api/activities').then(response => {
-    //   setActivities(response.data);
-    // })
-    // agent.Activities.list().then(response=>{
-    //   setActivities(response);
-    // });
+  //2
+  // useEffect(() => {
+  //   //calling get activities API
+  //   //we changed axios.get('http://localhost:5000/api/activities'). to get type safety
+  //   //we comment the below when we start using axios section
+  //   // axios.get<Activity[]>('http://localhost:5000/api/activities').then(response => {
+  //   //   setActivities(response.data);
+  //   // })
+  //   // agent.Activities.list().then(response=>{
+  //   //   setActivities(response);
+  //   // });
 
-    //after adding input type=date to input field in form,it won't display the date that returns from activities becuase it is in different format 
-    //so we need to reformat the date that returns from database
-    // agent.Activities.list().then(response => {
-    //   //create a new array of Activity 
-    //   let activities: Activity[] = [];
-    //   response.forEach(activity => {
-    //     activity.date = activity.date.split('T')[0];//split at T and get the first peice
-    //     activities.push(activity);
-    //   })
-    //   setActivities(activities);
-    //   setLoading(false);//trun off loading indicator
-    // });
+  //   //after adding input type=date to input field in form,it won't display the date that returns from activities becuase it is in different format 
+  //   //so we need to reformat the date that returns from database
+  //   // agent.Activities.list().then(response => {
+  //   //   //create a new array of Activity 
+  //   //   let activities: Activity[] = [];
+  //   //   response.forEach(activity => {
+  //   //     activity.date = activity.date.split('T')[0];//split at T and get the first peice
+  //   //     activities.push(activity);
+  //   //   })
+  //   //   setActivities(activities);
+  //   //   setLoading(false);//trun off loading indicator
+  //   // });
 
-    //after refacotring
-    activityStore.loadActivities();
-  }, [activityStore])//pass in the activity store as a dependncy to use effect here as well
+  //   //after refacotring
+  //   activityStore.loadActivities();
+  // }, [activityStore])//pass in the activity store as a dependncy to use effect here as well
 
   //remove the below after using Mobx
   // function handleSelectActivity(id: string) {
@@ -120,10 +129,15 @@ function App() {
 
   //check if we are loading before returning the jsx in the below return.
   //if (loading) return <LoadingComponent content='loading app' />
-  if (activityStore.loadingInitial) return <LoadingComponent content='loading app' />
+
+  //3
+  //if (activityStore.loadingInitial) return <LoadingComponent content='loading app' />
+
+  const location = useLocation();
 
   return (
-    //the below lines looks like html but they are not, they are jsx(JavaScript XML)
+    <>
+      {/* //the below lines looks like html but they are not, they are jsx(JavaScript XML)
     // <div className="App">
 
     //we will using fragment instead of a div to avoid rendering an empty div,and the reason we need somethign here
@@ -132,29 +146,61 @@ function App() {
     //inside it,we are not allowed to return two seperate elements at the same element so we need to add a div or fragment.
     //also a shorthand for <fragment> is empty tag <> and </>
     // <div> 
-    <Fragment>
+    // <Fragment> */}
       {/*removeing the below header and replace it with */}
       {/* <Header as='h2' icon='users' content='Reactivities'/> */}
       {/* <NavBar openForm={handleFormOpen} /> */}
-      <NavBar/>
-      <Container style={{ marginTop: '7em' }}>
-        {/* </List> */}
 
-        {/*Remove the below two lines after Refactoring the app to use MobX*/}
-        {/* <h2>{activityStore.title}</h2>
+      {/* <NavBar/> */}
+      {/* <Container style={{ marginTop: '7em' }}> */}
+      {/* </List> */}
+
+      {/*Remove the below two lines after Refactoring the app to use MobX*/}
+      {/* <h2>{activityStore.title}</h2>
         <Button content='Add exclamation!' positive onClick={activityStore.setTitle}/> */}
 
-        <ActivityDashboard
 
-          /*we sepecifiying activities property to pass activities list into ActivityDashboard*/
+      {/*
+        Removing below after adding routers
+         <ActivityDashboard
+
+          //we sepecifiying activities property to pass activities list into ActivityDashboard
           // activities={activityStore.activities}
           // // createOrEdit={handleCreateOreditActivity}
           // // deleteActivity={handleDeleteActivity}
           // submitting={submitting}
-        />
-      </Container>
+          /> 
+        */}
+      {/*React Router will return any component that match the path,so '/' will return homepage component
+        '/' activities wil return homepage and activities components, so we need to add exact for homepage route
+        */}
+      {/* <Route exact path='/' component={HomePage}/> */}
+      {/* <Route exact path='/activities' component={ActivityDashboard}/> */}
+      {/* <Route path='/activities/:id' component={ActivityDetails}/> */}
+      {/* <Route path='/createActivity' component={ActivityForm}/> */}
+      {/* <Route key={location.key} path={['/createActivity','/manage/:id']} component={ActivityForm}/> */}
+      {/* </Container> */}
       {/* </div> */}
-    </Fragment>
+      {/* </Fragment> */}
+
+      {/* Moving hoem page outside the nav bar */}
+      <Route exact path='/' component={HomePage} />
+      <Route
+        path={'/(.+)'}
+        render={() => (
+          <>
+            <NavBar />
+            <Container style={{ marginTop: '7em' }}>
+              <Route exact path='/activities' component={ActivityDashboard} />
+              <Route path='/activities/:id' component={ActivityDetails} />
+              {/* <Route path='/createActivity' component={ActivityForm} /> */}
+              <Route key={location.key} path={['/createActivity', '/manage/:id']} component={ActivityForm} />
+            </Container>
+          </>
+        )}
+      />
+    </>
+
   );
 }
 

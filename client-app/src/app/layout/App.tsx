@@ -13,11 +13,16 @@ import ActivityDashboard from '../../features/activities/dashboard/ActivityDashb
 // import LoadingComponent from '../layout/LoadingComponent'
 // import { useStore } from '../stores/store';
 import { observer } from 'mobx-react-lite';
-import { Route, useLocation } from 'react-router-dom';
+import { Route, Switch, useLocation } from 'react-router-dom';
 import ActivityForm from '../../features/activities/form/ActivityForm';
 
 import HomePage from '../../features/home/HomePage';
 import ActivityDetails from '../../features/activities/details/ActivityDetails';
+import TestErrors from '../../features/errors/TestErrors';
+import { ToastContainer } from 'react-toastify';
+import NotFound from '../../features/errors/NotFound';
+import ServerError from '../../features/errors/ServerError';
+
 function App() {
   //loading sppineer is appearing on each compoents,we we will remove it form here and paste it inside activty dashboard 1,2 and 3
   //using MobX store,hook in store.ts file
@@ -183,6 +188,8 @@ function App() {
       {/* </div> */}
       {/* </Fragment> */}
 
+      {/*Adding react tostify component*/}
+      <ToastContainer position='bottom-right' hideProgressBar/>
       {/* Moving hoem page outside the nav bar */}
       <Route exact path='/' component={HomePage} />
       <Route
@@ -191,10 +198,16 @@ function App() {
           <>
             <NavBar />
             <Container style={{ marginTop: '7em' }}>
+              <Switch>
               <Route exact path='/activities' component={ActivityDashboard} />
               <Route path='/activities/:id' component={ActivityDetails} />
               {/* <Route path='/createActivity' component={ActivityForm} /> */}
               <Route key={location.key} path={['/createActivity', '/manage/:id']} component={ActivityForm} />
+              <Route path='/errors' component={TestErrors} />
+              <Route path='/server-error' component={ServerError} />
+              <Route component={NotFound}/>
+              </Switch>
+
             </Container>
           </>
         )}

@@ -1,13 +1,17 @@
 
 import {createContext,useContext} from 'react';
 import  ActivityStore from './activityStore';
+import CommonStore from './commonStore';
 
 interface Store{
     activityStore:ActivityStore//class can be use also as types
+    commonStore:CommonStore;
+
 }
 
 export const store:Store={
-    activityStore: new ActivityStore()
+    activityStore: new ActivityStore(),
+    commonStore:new CommonStore()
 }
 
 //react context for the above,we use it in index.tsx file

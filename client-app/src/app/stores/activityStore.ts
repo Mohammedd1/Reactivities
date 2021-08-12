@@ -4,6 +4,7 @@ import { Activity } from "../models/activity";
 //import { v4 as uuid } from 'uuid';
 //import { runInNewContext } from "vm";
 //import ActivityForm from "../../features/activities/form/ActivityForm";
+import {format} from 'date-fns';
 
 export default class ActivityStore {
     //title = 'Hello from Mobx';
@@ -13,7 +14,7 @@ export default class ActivityStore {
     selectedActivity: Activity | undefined = undefined;
     editMode = false;
     loading = false;
-    loadingInitial = true;
+    loadingInitial = false;//prevent never end loading when click on create activity
 
     constructor() {
         // makeObservable(this, {
@@ -34,7 +35,8 @@ export default class ActivityStore {
     //sort activities by date
     get activitiesByDate() {
         return Array.from(this.activityRegistry.values()).sort((a, b) =>
-            Date.parse(a.date) - Date.parse(b.date));
+            //Date.parse(a.date) - Date.parse(b.date));
+           a.date!.getTime() - b.date!.getTime());
     }
 
 
@@ -43,7 +45,9 @@ export default class ActivityStore {
         //array of objects that has a key,value pairs
         return Object.entries(
             this.activitiesByDate.reduce((activities, activity) => {
-                const date = activity.date;
+                // const date = activity.date;
+                //const date = activity.date!.toISOString().split('T')[0];
+                const date =format(activity.date!,'dd MMM yyyy');
                 //So what we're checking for here is to see if we have a match for this activity on this date.
                 //activities[date] = activities[date] if they match then [...activities[date], activity]
                 activities[date] = activities[date] ? [...activities[date], activity] : [activity];
@@ -112,7 +116,8 @@ export default class ActivityStore {
     }
     //private helpwer methods
     private setActivity = (activity: Activity) => {
-        activity.date = activity.date.split('T')[0];//split at T and get the first peice
+        //activity.date = activity.date.split('T')[0];//split at T and get the first peice
+        activity.date = new Date(activity.date!);
         //this.activities.push(activity);//mutating our states
         this.activityRegistry.set(activity.id, activity);
     }

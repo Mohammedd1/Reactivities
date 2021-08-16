@@ -1,27 +1,20 @@
-// import React, { Fragment, useEffect, useState } from 'react';
-import { Fragment } from 'react';
-// import axios from 'axios';
 import { Container } from 'semantic-ui-react';
-//import { Activity } from '../models/activity';//added after adding activity.ts interface
 import NavBar from '../layout/NavBar';
 import ActivityDashboard from '../../features/activities/dashboard/ActivityDashboard';
-//uuid package
-// import { v4 as uuid } from 'uuid';
-// import { Agent } from 'https';
-//import agent from '../api/agent';
-// import { isForInStatement } from 'typescript';
-// import LoadingComponent from '../layout/LoadingComponent'
-// import { useStore } from '../stores/store';
 import { observer } from 'mobx-react-lite';
 import { Route, Switch, useLocation } from 'react-router-dom';
 import ActivityForm from '../../features/activities/form/ActivityForm';
-
 import HomePage from '../../features/home/HomePage';
 import ActivityDetails from '../../features/activities/details/ActivityDetails';
 import TestErrors from '../../features/errors/TestErrors';
 import { ToastContainer } from 'react-toastify';
 import NotFound from '../../features/errors/NotFound';
 import ServerError from '../../features/errors/ServerError';
+import LoginForm from '../../features/users/LoginForm';
+import { useStore } from '../stores/store';
+import { useEffect } from 'react';
+import LoadingComponent from './LoadingComponent';
+import ModalContainer from '../common/modals/ModalContainer';
 
 function App() {
   //loading sppineer is appearing on each compoents,we we will remove it form here and paste it inside activty dashboard 1,2 and 3
@@ -139,6 +132,19 @@ function App() {
   //if (activityStore.loadingInitial) return <LoadingComponent content='loading app' />
 
   const location = useLocation();
+  //Persisting token
+  const { commonStore, userStore } = useStore();
+  //use effect to do something when this component loads.
+  useEffect(() => {
+    if (commonStore.token) {
+      userStore.getUser().finally(() => commonStore.setAppLoaded());
+    }
+    else {
+      commonStore.setAppLoaded();
+    }
+  }, [commonStore, userStore])
+  //Add loading flag
+  if (!commonStore.appLoaded) return <LoadingComponent content='Loading app...' />
 
   return (
     <>
@@ -189,7 +195,8 @@ function App() {
       {/* </Fragment> */}
 
       {/*Adding react tostify component*/}
-      <ToastContainer position='bottom-right' hideProgressBar/>
+      <ToastContainer position='bottom-right' hideProgressBar />
+      <ModalContainer/>
       {/* Moving hoem page outside the nav bar */}
       <Route exact path='/' component={HomePage} />
       <Route
@@ -199,13 +206,14 @@ function App() {
             <NavBar />
             <Container style={{ marginTop: '7em' }}>
               <Switch>
-              <Route exact path='/activities' component={ActivityDashboard} />
-              <Route path='/activities/:id' component={ActivityDetails} />
-              {/* <Route path='/createActivity' component={ActivityForm} /> */}
-              <Route key={location.key} path={['/createActivity', '/manage/:id']} component={ActivityForm} />
-              <Route path='/errors' component={TestErrors} />
-              <Route path='/server-error' component={ServerError} />
-              <Route component={NotFound}/>
+                <Route exact path='/activities' component={ActivityDashboard} />
+                <Route path='/activities/:id' component={ActivityDetails} />
+                {/* <Route path='/createActivity' component={ActivityForm} /> */}
+                <Route key={location.key} path={['/createActivity', '/manage/:id']} component={ActivityForm} />
+                <Route path='/errors' component={TestErrors} />
+                <Route path='/server-error' component={ServerError} />
+                <Route path='/login' component={LoginForm} />
+                <Route component={NotFound} />
               </Switch>
 
             </Container>

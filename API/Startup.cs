@@ -8,10 +8,12 @@ using Application.Activities;
 using Application.Core;
 using FluentValidation.AspNetCore;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -38,17 +40,25 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             // services.AddControllers();
             //specifiy the fluent validation
-            services.AddControllers().AddFluentValidation(config =>
+            services.AddControllers(opt =>
+            {
+                //authorization policy
+                var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+                opt.Filters.Add(new AuthorizeFilter(policy));
+
+            })
+            .AddFluentValidation(config =>
             {
                 //we don't need to repeat this for each class create,delete,details,... , RegisterValidatorsFromAssemblyContaining
                 //will bring all the classess on same assepmly that Create is located in. 
                 config.RegisterValidatorsFromAssemblyContaining<Create>();
-            }
-              );
+            });
+
+            //Extensions
             services.AddApplicationServices(_config);
+            services.AddIdentityServices(_config);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -57,7 +67,7 @@ namespace API
             //anything in Configure method is a meddleware
 
             app.UseMiddleware<ExceptionMiddleware>();
-            
+
             if (env.IsDevelopment())
             {
                 //app.UseDeveloperExceptionPage();
@@ -69,6 +79,7 @@ namespace API
 
             app.UseRouting();
             app.UseCors("CorsPolicy");//add it below app.UseRouting();
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

@@ -1,18 +1,13 @@
 using Domain;
-using Persistence;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
-using MediatR;
 using Application.Activities;
-using System.Threading;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
+    
     public class ActivitiesController : BaseApiController
     {
         //Thin contrller:we gonna move the below commnetted code into basecontroller
@@ -35,6 +30,7 @@ namespace API.Controllers
         //     return await Mediator.Send(new List.Query(),ct);
         // }
         //end of cancelllation token
+        // [Authorize] //we removed this after adding auth policy to startup class
         [HttpGet("{id}")]
         // public async Task<ActionResult<Activity>> GetActivity(Guid id)
         public async Task<IActionResult> GetActivity(Guid id)

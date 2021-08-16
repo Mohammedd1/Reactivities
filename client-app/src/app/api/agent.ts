@@ -1,8 +1,11 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
+// import { request } from 'http';
 import { toast } from 'react-toastify';
 import { history } from '../..';
 import { Activity } from '../models/activity';
 import { store } from '../stores/store';
+import { User, UserFormValues } from '../models/user';
+
 
 //Method to add some sleep to show loading
 const sleep = (delay: number) => {
@@ -13,6 +16,12 @@ const sleep = (delay: number) => {
 
 axios.defaults.baseURL = 'http://localhost:5000/api';
 
+//Sending up the token with request
+axios.interceptors.request.use(config => {
+    const token = store.commonStore.token;
+    if (token) config.headers.Authorization = `Bearer ${token}`
+    return config;
+})
 //axios feature, every time we recieve a response come from our api we can do something with the response.
 axios.interceptors.response.use(async response => {
     // try {
@@ -26,19 +35,20 @@ axios.interceptors.response.use(async response => {
     await sleep(1000);
     return response;
 }, (error: AxiosError) => {
-    const { data, status ,config} = error.response!;
+    const { data, status, config } = error.response!;
 
     switch (status) {
         case 400:
             //showing toastify notes label
             //toast.error('bad request');
-            if(typeof data==='string'){
+            if (typeof data === 'string') {
                 toast.error(data);
             }
-            if(config.method==='get' && data.errors.hasOwnProperty('id')){
+            if (config.method === 'get' && data.errors.hasOwnProperty('id')) {
 
-            history.push('/not-found');}
-            
+                history.push('/not-found');
+            }
+
             if (data.errors) {
                 //variable to store the different errors
                 const modalStateErrors = [];
@@ -63,9 +73,9 @@ axios.interceptors.response.use(async response => {
             history.push('/not-found');
             break;
         case 500:
-           // toast.error('server error');
-           store.commonStore.setServerError(data);
-           history.push('/server-error');
+            // toast.error('server error');
+            store.commonStore.setServerError(data);
+            history.push('/server-error');
             break;
     }
     return Promise.reject(error);
@@ -101,8 +111,14 @@ const Activities = {
     delete: (id: string) => axios.delete<void>(`/activities/${id}`),
 }
 
+const Account = {
+    current: () => requests.get<User>('/account'),
+    login: (user: UserFormValues) => requests.post<User>('/account/login', user),
+    register: (user: UserFormValues) => requests.post<User>('/account/register', user)
+}
 const agent = {
-    Activities
+    Activities,
+    Account
 }
 
 //using this to access our activities request

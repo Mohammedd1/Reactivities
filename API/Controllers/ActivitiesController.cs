@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
-    
+
     public class ActivitiesController : BaseApiController
     {
         //Thin contrller:we gonna move the below commnetted code into basecontroller
@@ -70,7 +70,7 @@ namespace API.Controllers
             //return Ok(await Mediator.Send(new Create.Command { Activity = activity }));
             return HandleResult(await Mediator.Send(new Create.Command { Activity = activity }));
         }
-
+         [Authorize(Policy = "IsActivityHost")]//the policy we created in IdentityServiceExtensions
         [HttpPut("{id}")]
         public async Task<IActionResult> EditActivity(Guid id, Activity activity)
         {
@@ -80,6 +80,7 @@ namespace API.Controllers
             return HandleResult(await Mediator.Send(new Edit.Command { Activity = activity }));
         }
 
+        [Authorize(Policy = "IsActivityHost")]//the policy we created in IdentityServiceExtensions
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteActivity(Guid id)
         {
@@ -87,6 +88,12 @@ namespace API.Controllers
 
             return HandleResult(await Mediator.Send(new Delete.Command { Id = id }));
 
+        }
+
+        [HttpPost("{id}/attend")]
+        public async Task<IActionResult> Attend(Guid id)
+        {
+            return HandleResult(await Mediator.Send(new UpdateAttendance.Command { Id = id }));
         }
     }
 }

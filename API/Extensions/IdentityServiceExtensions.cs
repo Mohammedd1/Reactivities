@@ -7,6 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Persistence;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Infrastructure.Security;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Extensions
 {
@@ -23,19 +25,28 @@ namespace API.Extensions
 
             //servcies.AddAuthentication();
             // var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("super secret key"));
-             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["TokenKey"]));
-            
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["TokenKey"]));
+
             servcies.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(opt =>{
-                opt.TokenValidationParameters= new TokenValidationParameters
+            .AddJwtBearer(opt =>
+            {
+                opt.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuerSigningKey=true,//we will compare the key in the token with the one in our server
-                    IssuerSigningKey= key,//tell the servre about the key it needs to use
-                    ValidateIssuer=false,
-                    ValidateAudience=false
+                    ValidateIssuerSigningKey = true,//we will compare the key in the token with the one in our server
+                    IssuerSigningKey = key,//tell the servre about the key it needs to use
+                    ValidateIssuer = false,
+                    ValidateAudience = false
                 };
             });
 
+            servcies.AddAuthorization(opt =>
+            {
+                opt.AddPolicy("IsActivityHost", policy =>
+                {
+                    policy.Requirements.Add(new IsHostRequirement());
+                });
+            });
+            servcies.AddTransient<IAuthorizationHandler,IsHostRequirementHandler>();
             servcies.AddScoped<TokenService>();
             return servcies;
         }

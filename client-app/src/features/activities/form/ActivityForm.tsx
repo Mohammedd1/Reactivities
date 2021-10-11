@@ -14,14 +14,14 @@ import MyTextArea from '../../../app/common/form/MyTextArea';
 import MySelectInput from '../../../app/common/form/MySelectInput';
 import { categoryOptions } from '../../../app/common/options/categoryOptions';
 import MyDateInput from '../../../app/common/form/MyDateInput';
-import { Activity } from '../../../app/models/activity';
+import {ActivityFormValues } from '../../../app/models/activity';
 
 //activity:selectedActivity --> reference  activity to selectedActivity name
 export default observer(function ActivityForm() {
     const history = useHistory();
     const { activityStore } = useStore();
     //const {selectedActivity,createActivity,updateActivity,loading}=activityStore;
-    const { createActivity, updateActivity, loading, loadActivity, loadingInitial } = activityStore;
+    const { createActivity, updateActivity, loadActivity, loadingInitial } = activityStore;
 
     //populate initialState and store it inside component state
     //const [activity, setActivity] = useState(initialState);
@@ -29,16 +29,7 @@ export default observer(function ActivityForm() {
     //using routes
     const { id } = useParams<{ id: string }>();
     // const [activity, setActivity] = useState({
-    const [activity, setActivity] = useState<Activity>({
-        id: '',
-        title: '',
-        description: '',
-        category: '',
-        // date: '',
-        date: null,
-        city: '',
-        venue: ''
-    });
+    const [activity, setActivity] = useState<ActivityFormValues>(new ActivityFormValues());
 
     //yup validation schema
     const validationSchema = Yup.object({
@@ -50,7 +41,7 @@ export default observer(function ActivityForm() {
         city: Yup.string().required()//using Yup default message
     })
     useEffect(() => {
-        if (id) loadActivity(id).then(activity => setActivity(activity!));
+        if (id) loadActivity(id).then(activity => setActivity(new ActivityFormValues(activity!)));
         // '!' --> exclamation mark after variable name called  :Non-null assertion operator
         // it means you're telling to TypeScript that you're certain that value is not null or undefined.
     }, [id, loadActivity])
@@ -59,10 +50,10 @@ export default observer(function ActivityForm() {
     // effect and then we go and sets of states and then we render our component and then we go and use
     // our effect,But if we add dependencuies, then we only execute the code inside here if of these parameters have changed
 
-    function handleFormSubmit(activity: Activity) {
+    function handleFormSubmit(activity: ActivityFormValues) {
 
         //redirectiona fter submisision
-        if (activity.id.length === 0) {
+        if (!activity.id) {
             let newActivity = {
                 ...activity,
                 id: uuid()
@@ -138,7 +129,7 @@ export default observer(function ActivityForm() {
                         <MyTextInput placeholder='Venue' name='venue' />
                         <Button
                         disabled={isSubmitting || !dirty ||!isValid}
-                            loading={loading}
+                            loading={isSubmitting}
                             floated='right'
                             positive
                             type='submit'

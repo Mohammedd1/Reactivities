@@ -1,10 +1,12 @@
 import { makeAutoObservable, runInAction } from "mobx";
 import agent from "../api/agent";
-import { Activity } from "../models/activity";
+import { Activity, ActivityFormValues } from "../models/activity";
 //import { v4 as uuid } from 'uuid';
-//import { runInNewContext } from "vm";
+//import { runInNewContext } from "vm"; 
 //import ActivityForm from "../../features/activities/form/ActivityForm";
-import {format} from 'date-fns';
+import { format } from 'date-fns';
+import { store } from "./store";
+import { Profile } from "../models/profile";
 
 export default class ActivityStore {
     //title = 'Hello from Mobx';
@@ -36,7 +38,7 @@ export default class ActivityStore {
     get activitiesByDate() {
         return Array.from(this.activityRegistry.values()).sort((a, b) =>
             //Date.parse(a.date) - Date.parse(b.date));
-           a.date!.getTime() - b.date!.getTime());
+            a.date!.getTime() - b.date!.getTime());
     }
 
 
@@ -47,13 +49,13 @@ export default class ActivityStore {
             this.activitiesByDate.reduce((activities, activity) => {
                 // const date = activity.date;
                 //const date = activity.date!.toISOString().split('T')[0];
-                const date =format(activity.date!,'dd MMM yyyy');
+                const date = format(activity.date!, 'dd MMM yyyy');
                 //So what we're checking for here is to see if we have a match for this activity on this date.
                 //activities[date] = activities[date] if they match then [...activities[date], activity]
                 activities[date] = activities[date] ? [...activities[date], activity] : [activity];
                 return activities;
 
-            },{} as {[key:string]:Activity[]})//initial object to fix typing error,it tells us that each element implicitly has in any type
+            }, {} as { [key: string]: Activity[] })//initial object to fix typing error,it tells us that each element implicitly has in any type
             //because expression of type string cannot be used to index type activity.
             //the key is the date and the value is an array of activity that are on  same date.
         )
@@ -116,6 +118,15 @@ export default class ActivityStore {
     }
     //private helpwer methods
     private setActivity = (activity: Activity) => {
+        const user = store.userStore.user;
+        if (user) {
+            activity.isGoing = activity.attendees!.some(
+                a => a.username === user.username
+            )
+            activity.isHost = activity.hostUsername === user.username;
+            activity.host = activity.attendees?.find(x => x.username === activity.hostUsername);
+        }
+
         //activity.date = activity.date.split('T')[0];//split at T and get the first peice
         activity.date = new Date(activity.date!);
         //this.activities.push(activity);//mutating our states
@@ -145,37 +156,53 @@ export default class ActivityStore {
     //     this.editMode = false;
     // }
 
-    createActivity = async (activity: Activity) => {
-        this.loading = true;
+    createActivity = async (activity: ActivityFormValues) => {
+        // this.loading = true;
         //after using history to redirect after the submit, we will move the uuid from below and set itin ActivityForm.tsx
         //activity.id = uuid();
+        const user = store.userStore.user;
+        const attendee = new Profile(user!);
         try {
             await agent.Activities.create(activity);
+            const newActivity = new Activity(activity);//174
+            newActivity.hostUsername = user!.username;//174
+            newActivity.attendees = [attendee];//174
+            this.setActivity(newActivity);//174
             //update activity array inside our store
             runInAction(() => {
                 //this.activities.push(activity);
-                this.activityRegistry.set(activity.id, activity);
-                this.selectedActivity = activity;
-                this.editMode = false;
-                this.loading = false;
+                //this.activityRegistry.set(activity.id, activity);
+                //this.selectedActivity = activity;
+                // this.editMode = false;
+                // this.loading = false;
+                this.selectedActivity = newActivity;//174
             })
         } catch (error) {
             console.log(error);
-            runInAction(() => {
-                this.loading = false;
-            })
+            // runInAction(() => {
+            //     this.loading = false;
+            // })
         }
     }
-    updateActivity = async (activity: Activity) => {
-        this.loading = true;
+    updateActivity = async (activity: ActivityFormValues) => {
+        // this.loading = true;
         try {
             await agent.Activities.update(activity);
             runInAction(() => {
                 //this.activities = [...this.activities.filter(a => a.id !== activity.id), activity];
-                this.activityRegistry.set(activity.id, activity);
-                this.selectedActivity = activity;
-                this.editMode = false;
-                this.loading = false;
+                //this.activityRegistry.set(activity.id, activity);
+                //this.selectedActivity = activity;
+                // this.editMode = false;
+                // this.loading = false;
+
+                //174
+                if (activity.id) {
+                    let updatedActivity = { ...this.getActivity(activity.id), ...activity }
+                    this.activityRegistry.set(activity.id, updatedActivity as Activity);
+                    this.selectedActivity = updatedActivity as Activity;
+                }
+
+
             })
         }
         catch (error) {
@@ -207,4 +234,48 @@ export default class ActivityStore {
         }
 
     }
-}
+    updateAttendance = async () => {
+        const user = store.userStore.user;
+        this.loading = true;
+        try {
+            await agent.Activities.attend(this.selectedActivity!.id);
+            runInAction(() => {
+                if (this.selectedActivity?.isGoing) {
+                    this.selectedActivity.attendees =
+                        this.selectedActivity.attendees?.filter(a => a.username !== user?.username);
+                    this.selectedActivity.isGoing = false;
+                }
+                else {
+                    const attendee = new Profile(user!);
+                    this.selectedActivity?.attendees?.push(attendee);
+                    this.selectedActivity!.isGoing = true;
+
+                }
+
+                this.activityRegistry.set(this.selectedActivity!.id, this.selectedActivity!)
+            })
+        } catch (error) {
+            console.log(error);
+        }
+        finally {
+            runInAction(() => this.loading = false);
+        }
+    }
+
+    //175
+    cancelActivityToggle = async () => {
+        this.loading = true;
+        try {
+            await agent.Activities.attend(this.selectedActivity!.id);
+            runInAction(() => {
+                this.selectedActivity!.isCancelled = !this.selectedActivity?.isCancelled;
+                this.activityRegistry.set(this.selectedActivity!.id,this.selectedActivity!);
+            })
+        } catch (error) {
+            console.log(error);
+        } finally {
+            runInAction(() => this.loading = false);
+        }
+
+    }
+} 

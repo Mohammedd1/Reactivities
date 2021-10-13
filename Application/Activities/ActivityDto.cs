@@ -17,6 +17,6 @@ namespace Application.Activities
          public bool  IsCancelled { get; set; }
         //dentify which one of the attendees is the host of this activity.
         public string HostUsername { get; set; }
-        public ICollection<Profile> Attendees { get; set; }
+        public ICollection<AttendeeDto> Attendees { get; set; }
     }
 }

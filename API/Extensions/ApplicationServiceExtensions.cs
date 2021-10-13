@@ -1,6 +1,8 @@
 using Application.Activities;
 using Application.Core;
 using Application.Interfaces;
+using Application.Photos;
+using Infrastructure.Photos;
 using Infrastructure.Security;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -31,8 +33,8 @@ namespace API.Extensions
             {
                 opt.AddPolicy("CorsPolicy", policy =>
                  {
-                    //  policy.AllowAnyMethod().AllowAnyHeader().WithOrigins("http://localhost:3000");
-                    policy.AllowAnyMethod().AllowAnyHeader().WithOrigins("http://localhost:3002");
+                     //  policy.AllowAnyMethod().AllowAnyHeader().WithOrigins("http://localhost:3000");
+                     policy.AllowAnyMethod().AllowAnyHeader().WithOrigins("http://localhost:3002");
                  });
             });
             services.AddMediatR(typeof(List.Handler).Assembly);//tells the mediator where our handler is
@@ -43,6 +45,11 @@ namespace API.Extensions
             //we've now got the ability to get the currently logged in users username from
             //anywhere in our application, really.
             services.AddScoped<IUserAccessor, UserAccessor>();
+
+            services.AddScoped<IPhotoAccessor, PhotoAccessor>();//180
+
+            //Cloudinary setting
+            services.Configure<CloudinarySettings>(config.GetSection("Cloudinary"));//Since we have strongly typed class 'CloduinarySetting.cs' no need to map each value
 
             return services;
         }

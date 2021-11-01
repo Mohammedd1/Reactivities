@@ -12,7 +12,7 @@ export default function MyDatePicker(props: Partial<ReactDatePickerProps>) {
     return (
         <Form.Field error={meta.touched && !!meta.error}>
             <DatePicker
-                // spread fileds and props
+                // spread fiedls and props
                 {...field}
                 {...props}
                 selected={(field.value && new Date(field.value)) || null}

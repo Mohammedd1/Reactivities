@@ -16,5 +16,7 @@ namespace Domain
         //  public ICollection<ActivityAttendee> Attendees{get;set;}
         //we need to initialize Attendees, to avoid 'Object reference not set to an instance of an object' exception when adding a new activity
         public ICollection<ActivityAttendee> Attendees { get; set; } = new List<ActivityAttendee>();
+        //209
+        public ICollection<Comment> Comments{get;set;}=new List<Comment>();
     }
 }

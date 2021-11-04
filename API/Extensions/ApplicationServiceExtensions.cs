@@ -33,7 +33,11 @@ namespace API.Extensions
             {
                 opt.AddPolicy("CorsPolicy", policy =>
                  {
-                      policy.AllowAnyMethod().AllowAnyHeader().WithOrigins("http://localhost:3000");
+                      policy
+                      .AllowAnyMethod()
+                      .AllowAnyHeader()
+                      .AllowCredentials()//added 216
+                      .WithOrigins("http://localhost:3000");
                  });
             });
             services.AddMediatR(typeof(List.Handler).Assembly);//tells the mediator where our handler is
@@ -49,6 +53,9 @@ namespace API.Extensions
 
             //Cloudinary setting
             services.Configure<CloudinarySettings>(config.GetSection("Cloudinary"));//Since we have strongly typed class 'CloduinarySetting.cs' no need to map each value
+
+            //214
+            services.AddSignalR();
 
             return services;
         }

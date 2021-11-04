@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
+using System.Threading.Tasks;
 
 namespace API.Extensions
 {
@@ -37,6 +38,24 @@ namespace API.Extensions
                     ValidateIssuer = false,
                     ValidateAudience = false
                 };
+                //214 
+                //SingalR Authentication
+                //It's different to how we do it in an API controller because in 
+                //singalR we don't have the ability to send up an HTTP header.so that we need to put Jwt as a query string.
+                opt.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) && (path.StartsWithSegments("/chat")))
+                        {
+                            context.Token = accessToken;
+
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
             servcies.AddAuthorization(opt =>
@@ -46,7 +65,7 @@ namespace API.Extensions
                     policy.Requirements.Add(new IsHostRequirement());
                 });
             });
-            servcies.AddTransient<IAuthorizationHandler,IsHostRequirementHandler>();
+            servcies.AddTransient<IAuthorizationHandler, IsHostRequirementHandler>();
             servcies.AddScoped<TokenService>();
             return servcies;
         }

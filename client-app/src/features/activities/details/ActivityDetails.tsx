@@ -18,14 +18,15 @@ import ActivityDetailedChat from '../details/ActivityDetailedChat';
 
 export default observer(function ActivityDetails() {
     const { activityStore } = useStore();
-    const { selectedActivity: activity,loadActivity,loadingInitial } = activityStore;
+    const { selectedActivity: activity,loadActivity,loadingInitial,clearSelectedActivity } = activityStore;//modified 219
 
     //using route parameters
     const { id } = useParams<{ id: string }>();
     // we want to side effect to occur when we load this particular component.
     useEffect(() => {
         if (id) loadActivity(id);
-    },[id,loadActivity]);//id and loadActivity here are dependencies
+        return () => clearSelectedActivity();//219
+    },[id,loadActivity,clearSelectedActivity]);//id and loadActivity here are dependencies //modified 219
 
 
     if (loadingInitial || !activity) return <LoadingComponent />;//we should return jsx element here,this will not return any thing,because we are
@@ -57,7 +58,7 @@ export default observer(function ActivityDetails() {
                 <ActivityDetailedHeader activity={activity} />
                 
                 <ActivityDetailedInfo activity={activity}/>
-                <ActivityDetailedChat/>
+                <ActivityDetailedChat activityId={activity.id} />{ /*modified 216*/}
             </Grid.Column>
             <Grid.Column width={6}>
                 <ActivityDetailedSidebar activity={activity}/>

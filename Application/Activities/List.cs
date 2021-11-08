@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Application.Core;
+using Application.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Domain;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Persistence;
 
 namespace Application.Activities
@@ -25,8 +25,10 @@ namespace Application.Activities
         {
             private readonly DataContext _context;
             private readonly IMapper _mapper;
-            public Handler(DataContext context, IMapper mapper)
+            private readonly IUserAccessor _userAccessor;
+            public Handler(DataContext context, IMapper mapper, IUserAccessor userAccessor)//modified228
             {
+                _userAccessor = userAccessor;
                 _mapper = mapper;
                 _context = context;
             }
@@ -53,7 +55,8 @@ namespace Application.Activities
                 //Instead of returning all properties that we don't need we can use
                 // ProjectTo(like using Select in Linq, but in mapper is more easy)
                 var activities = await _context.Activities
-               .ProjectTo<ActivityDto>(_mapper.ConfigurationProvider)
+               .ProjectTo<ActivityDto>(_mapper.ConfigurationProvider,
+               new {currentUsername=_userAccessor.GetUsername()})//modified 228
                 .ToListAsync(cancellationToken);
 
                 return Result<List<ActivityDto>>.Success(activities);

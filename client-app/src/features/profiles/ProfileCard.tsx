@@ -4,6 +4,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, Icon, Image } from 'semantic-ui-react';
 import { Profile } from '../../app/models/profile';
+import FollowButton from './FollowButton';
 
 interface Props {
     profile: Profile;
@@ -13,12 +14,12 @@ export default observer(function ProfileCard({ profile }: Props) {
 
     //207
     //truncate function to restrict the amount of text displayed in
-//the attendee profile cards
+    //the attendee profile cards
     function truncate(str: string | undefined) {
         if (str) {
-        return str.length > 40 ? str.substring(0, 37) + '...' : str;
+            return str.length > 40 ? str.substring(0, 37) + '...' : str;
         }
-        }
+    }
 
     return (
         <Card as={Link} to={`/profiles/${profile.username}`}>
@@ -28,9 +29,10 @@ export default observer(function ProfileCard({ profile }: Props) {
                 <Card.Description>{truncate(profile.bio)/*207*/}</Card.Description>
             </Card.Content>
             <Card.Content extra>
-                <Icon name='user'/>
-                20 followers
+                <Icon name='user' />
+                {profile.followersCount /*229*/} followers
             </Card.Content>
+            <FollowButton profile={profile} />{/*231*/}
         </Card>
     )
 

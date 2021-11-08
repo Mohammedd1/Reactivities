@@ -133,7 +133,10 @@ const Profiles = {
     //204
     setMainPhoto:(id:string) => requests.post(`/photos/${id}/setMain`,{}),
     deletePhoto:(id:string) => requests.del(`/photos/${id}`),
-    updateProfile: (profile: Partial<Profile>) => requests.put(`/profiles`,profile)//207
+    updateProfile: (profile: Partial<Profile>) => requests.put(`/profiles`, profile),//207
+    updateFollowing: (username: string) => requests.post(`/follow/${username}`, {}),//230
+    listFollowings: (username: string, predicate: string) =>
+        requests.get<Profile[]>(`/follow/${username}?predicate=${predicate}`)//232
 }
 
 const agent = {

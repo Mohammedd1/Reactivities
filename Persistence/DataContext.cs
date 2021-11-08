@@ -15,8 +15,8 @@ namespace Persistence
         public DbSet<ActivityAttendee> ActivityAttendee { get; set; }
 
         public DbSet<Photo> Photos { get; set; }//182
-         public DbSet<Comment> Comments { get; set; }//209
-
+        public DbSet<Comment> Comments { get; set; }//209
+        public DbSet<UserFollowing> UserFollowings { get; set; }//222
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -35,11 +35,27 @@ namespace Persistence
          .WithMany(a => a.Attendees)
          .HasForeignKey(aa => aa.ActivityId);
 
-         //209
-         builder.Entity<Comment>()
-         .HasOne(a=>a.Activity)
-         .WithMany(c=>c.Comments)
-         .OnDelete(DeleteBehavior.Cascade);//mean if we delete an activity,it will cascade that delete down to the comments that were associated
+            //209
+            builder.Entity<Comment>()
+            .HasOne(a => a.Activity)
+            .WithMany(c => c.Comments)
+            .OnDelete(DeleteBehavior.Cascade);//mean if we delete an activity,it will cascade that delete down to the comments that were associated
+
+            //222
+            builder.Entity<UserFollowing>(b =>
+            {
+                b.HasKey(k => new { k.ObserverId, k.TargetId });
+                //relation 1
+                b.HasOne(o => o.Observer)
+                .WithMany(f => f.Followings)
+                .HasForeignKey(o => o.ObserverId)
+                .OnDelete(DeleteBehavior.Cascade);
+                //relation 2
+                b.HasOne(o => o.Target)
+                .WithMany(f => f.Followers)
+                .HasForeignKey(o => o.TargetId)
+                .OnDelete(DeleteBehavior.Cascade);
+            });
         }
     }
 }

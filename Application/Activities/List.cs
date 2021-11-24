@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Application.Core;
@@ -16,12 +17,15 @@ namespace Application.Activities
     public class List
     {
         // public class Query : IRequest<Result<List<Activity>>>
-        public class Query : IRequest<Result<List<ActivityDto>>>
+        // public class Query : IRequest<Result<List<ActivityDto>>>
+        public class Query : IRequest<Result<PagedList<ActivityDto>>> //modified 238
         {
+            public ActivityParams Params { get; set; }//modified 244
 
         }
         // public class Handler : IRequestHandler<Query, Result<List<Activity>>>
-        public class Handler : IRequestHandler<Query, Result<List<ActivityDto>>>
+        // public class Handler : IRequestHandler<Query, Result<List<ActivityDto>>>
+        public class Handler : IRequestHandler<Query, Result<PagedList<ActivityDto>>> //modified 238
         {
             private readonly DataContext _context;
             private readonly IMapper _mapper;
@@ -33,7 +37,7 @@ namespace Application.Activities
                 _context = context;
             }
 
-            public async Task<Result<List<ActivityDto>>> Handle(Query request, CancellationToken cancellationToken)
+            public async Task<Result<PagedList<ActivityDto>>> Handle(Query request, CancellationToken cancellationToken)
             {
 
                 //return Result<List<Activity>>.Success(await _context.Activities.ToListAsync(cancellationToken));
@@ -54,12 +58,34 @@ namespace Application.Activities
                 //Projection
                 //Instead of returning all properties that we don't need we can use
                 // ProjectTo(like using Select in Linq, but in mapper is more easy)
-                var activities = await _context.Activities
-               .ProjectTo<ActivityDto>(_mapper.ConfigurationProvider,
-               new {currentUsername=_userAccessor.GetUsername()})//modified 228
-                .ToListAsync(cancellationToken);
+                //modified 238
+                //     var activities = await _context.Activities
+                //    .ProjectTo<ActivityDto>(_mapper.ConfigurationProvider,
+                //    new {currentUsername=_userAccessor.GetUsername()})//modified 228
+                //     .ToListAsync(cancellationToken);
 
-                return Result<List<ActivityDto>>.Success(activities);
+                var query = _context.Activities
+                .Where(d => d.Date >= request.Params.StartDate)//244
+                .OrderBy(d => d.Date)//modified 239
+                   .ProjectTo<ActivityDto>(_mapper.ConfigurationProvider,
+                   new { currentUsername = _userAccessor.GetUsername() })//modified 228
+                    .AsQueryable();
+
+                //244
+                if (request.Params.IsGoing && !request.Params.IsHost)
+                {
+                    query = query.Where(x => x.Attendees.Any(a => a.Username == _userAccessor.GetUsername()));
+                }
+                if (request.Params.IsHost && !request.Params.IsGoing)
+                {
+                    query = query.Where(x => x.HostUsername == _userAccessor.GetUsername());
+                }
+
+                //return Result<List<ActivityDto>>.Success(activities);
+                return Result<PagedList<ActivityDto>>.Success(
+                    await PagedList<ActivityDto>.CreateAsync(query, request.Params.PageNumber, request.Params.PageSize)
+                ); //modified 238
+
 
             }
 

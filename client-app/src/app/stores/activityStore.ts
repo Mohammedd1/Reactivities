@@ -1,4 +1,4 @@
-import { makeAutoObservable, runInAction } from "mobx";
+import { makeAutoObservable, reaction, runInAction } from "mobx";
 import agent from "../api/agent";
 import { Activity, ActivityFormValues } from "../models/activity";
 //import { v4 as uuid } from 'uuid';
@@ -7,6 +7,8 @@ import { Activity, ActivityFormValues } from "../models/activity";
 import { format } from 'date-fns';
 import { store } from "./store";
 import { Profile } from "../models/profile";
+import { Pagination, PagingParams } from "../models/pagination";
+
 
 export default class ActivityStore {
     //title = 'Hello from Mobx';
@@ -17,6 +19,9 @@ export default class ActivityStore {
     editMode = false;
     loading = false;
     loadingInitial = false;//prevent never end loading when click on create activity
+    pagination: Pagination | null = null;//240
+    pagingParams = new PagingParams();//241
+    predicate = new Map().set('all', true);//245
 
     constructor() {
         // makeObservable(this, {
@@ -30,7 +35,66 @@ export default class ActivityStore {
         // })
 
         //we don't need to specifiy the properties inside makeObservable method 
-        makeAutoObservable(this)
+        makeAutoObservable(this);
+        //245
+        reaction(
+            () => this.predicate.keys(),
+            () => {
+                this.pagingParams = new PagingParams();
+                this.activityRegistry.clear();
+                this.loadActivities();
+            }
+        )
+
+    }
+
+    //241
+    setPagingParams = (pagingParams: PagingParams) => {
+        this.pagingParams = pagingParams;
+    }
+
+    //245
+    setPredicate = (predicate: string, value: string | Date) => {
+        const resetPredicate = () => {
+            this.predicate.forEach((value, key) => {
+                if (key !== 'startDate') this.predicate.delete(key);
+            })
+        }
+        switch (predicate) {
+            case 'all':
+                resetPredicate();
+                this.predicate.set('all', true);
+                break;
+            case 'isGoing':
+                resetPredicate();
+                this.predicate.set('isGoing', true);
+                break;
+            case 'isHost':
+                resetPredicate();
+                this.predicate.set('isHost', true);
+                break;
+            case 'startDate':
+                this.predicate.delete('startDate');
+                this.predicate.set('startDate', value);
+        }
+    }
+    //241
+    //a way to send query string parameters instead of make it direct as '?pageNumber=&PageSize='
+    // in the URL 'requests.get<PaginatedResult<Activity[]>>('/activities')'
+    get axiosParams() {
+        const params = new URLSearchParams();
+        params.append('pageNumber', this.pagingParams.pageNumber.toString());
+        params.append('pageSize', this.pagingParams.pageSize.toString());
+        //245
+        this.predicate.forEach((value, key) => {
+            if (key === 'startDate') {
+                params.append(key, (value as Date).toISOString())
+            }
+            else {
+                params.append(key, value);
+            }
+        })
+        return params;
     }
 
     //computed functions
@@ -79,17 +143,24 @@ export default class ActivityStore {
         this.loadingInitial = true;
         try {
             //get activities from API
-            const activities = await agent.Activities.list();
+            const result = await agent.Activities.list(this.axiosParams);//modified 240 //modified 241
             //loop over these activities
-            activities.forEach(activity => {
+            //modified 240
+            result.data.forEach(activity => {
                 this.setActivity(activity);
             })
+            this.setPagination(result.pagination);//240
             this.setloadingInitial(false);
         } catch (error) {
             console.log(error);
             this.setloadingInitial(false);
 
         }
+    }
+
+    //240
+    setPagination = (pagination: Pagination) => {
+        this.pagination = pagination;
     }
 
     loadActivity = async (id: string) => {

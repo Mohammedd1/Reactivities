@@ -5,7 +5,9 @@ import { history } from '../..';
 import { Activity, ActivityFormValues } from '../models/activity';
 import { store } from '../stores/store';
 import { User, UserFormValues } from '../models/user';
-import { Photo, Profile } from '../models/profile';
+import { Photo, Profile, UserActivity } from '../models/profile';
+import { PaginatedResult } from '../models/pagination';
+
 
 
 //Method to add some sleep to show loading
@@ -34,6 +36,13 @@ axios.interceptors.response.use(async response => {
     //     return await Promise.reject(error);
     // }
     await sleep(1000);
+    //240
+    const pagination = response.headers['pagination'];
+    if (pagination) {
+        response.data = new PaginatedResult(response.data, JSON.parse(pagination));
+        return response as AxiosResponse<PaginatedResult<any>>;
+    }
+
     return response;
 }, (error: AxiosError) => {
     const { data, status, config } = error.response!;
@@ -105,7 +114,8 @@ const requests = {
 const Activities = {
     // list: () => requests.get('/activities')
     //specifying the type
-    list: () => requests.get<Activity[]>('/activities'),
+    list: (params: URLSearchParams) => axios.get<PaginatedResult<Activity[]>>('/activities', { params })
+        .then(responseBody),//modified 240 //modified 241
     details: (id: string) => requests.get<Activity>(`/activities/${id}`),
     create: (activity: ActivityFormValues) => requests.post<void>('/activities', activity),
     update: (activity: ActivityFormValues) => requests.put<void>(`/activities/${activity.id}`, activity),
@@ -123,20 +133,23 @@ const Account = {
 const Profiles = {
     get: (username: string) => requests.get<Profile>(`/profiles/${username}`),
     //203
-    uploadPhoto:(file:Blob)=>{
-        let formData= new FormData();
-        formData.append('File',file);
-        return axios.post<Photo>('photos',formData,{
-            headers:{'Content-type':'multipart/form-data'}
+    uploadPhoto: (file: Blob) => {
+        let formData = new FormData();
+        formData.append('File', file);
+        return axios.post<Photo>('photos', formData, {
+            headers: { 'Content-type': 'multipart/form-data' }
         })
     },
     //204
-    setMainPhoto:(id:string) => requests.post(`/photos/${id}/setMain`,{}),
-    deletePhoto:(id:string) => requests.del(`/photos/${id}`),
+    setMainPhoto: (id: string) => requests.post(`/photos/${id}/setMain`, {}),
+    deletePhoto: (id: string) => requests.del(`/photos/${id}`),
     updateProfile: (profile: Partial<Profile>) => requests.put(`/profiles`, profile),//207
     updateFollowing: (username: string) => requests.post(`/follow/${username}`, {}),//230
     listFollowings: (username: string, predicate: string) =>
-        requests.get<Profile[]>(`/follow/${username}?predicate=${predicate}`)//232
+        requests.get<Profile[]>(`/follow/${username}?predicate=${predicate}`),//232
+    listActivities: (username: string, predicate: string) =>
+        requests.get<UserActivity[]>(`/profiles/${username}/activities?predicate=${predicate}`)//249
+
 }
 
 const agent = {

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Application.Activities;
 using Microsoft.AspNetCore.Authorization;
+using Application.Core;
 
 namespace API.Controllers
 {
@@ -19,9 +20,11 @@ namespace API.Controllers
 
 
         [HttpGet]
-        public async Task<IActionResult> GetActivities()
+        //modified 238-244
+        public async Task<IActionResult> GetActivities([FromQuery] ActivityParams param)
         {
-            return HandleResult(await Mediator.Send(new List.Query()));
+            // return HandleResult(await Mediator.Send(new List.Query{Params=param}));
+            return HandlePagedResult(await Mediator.Send(new List.Query { Params = param }));//modified 239
         }
         //Coancellation token Demonstration
         // [HttpGet]
@@ -70,7 +73,7 @@ namespace API.Controllers
             //return Ok(await Mediator.Send(new Create.Command { Activity = activity }));
             return HandleResult(await Mediator.Send(new Create.Command { Activity = activity }));
         }
-         [Authorize(Policy = "IsActivityHost")]//the policy we created in IdentityServiceExtensions
+        [Authorize(Policy = "IsActivityHost")]//the policy we created in IdentityServiceExtensions
         [HttpPut("{id}")]
         public async Task<IActionResult> EditActivity(Guid id, Activity activity)
         {

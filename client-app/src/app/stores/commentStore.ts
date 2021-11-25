@@ -15,7 +15,8 @@ export default class CommentStore {
     createHubConnection = (activityId: string) => {
         if (store.activityStore.selectedActivity) {
             this.hubConnection = new HubConnectionBuilder()
-                .withUrl('http://localhost:5000/chat?activityId=' + activityId, {
+                // .withUrl('http://localhost:5000/chat?activityId=' + activityId, { - modfied 254
+                .withUrl(process.env.REACT_aPP_CHAT_URL + '?activityId=' + activityId, {
                     accessTokenFactory: () => store.userStore.user?.token!
                 })
                 .withAutomaticReconnect()
@@ -29,9 +30,9 @@ export default class CommentStore {
                 runInAction(() => {
                     //219
                     comments.forEach(comment => {
-                        comment.createdAt = new Date(comment.createdAt +'Z');
+                        comment.createdAt = new Date(comment.createdAt + 'Z');
                     })
-                    this.comments = comments  
+                    this.comments = comments
                 });
             })
             //ReceiveComment should be the same name we put in ChatHub.cs file

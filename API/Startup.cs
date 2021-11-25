@@ -79,6 +79,9 @@ namespace API
             app.UseHttpsRedirection();
 
             app.UseRouting();
+            //256
+            app.UseStaticFiles();
+
             app.UseCors("CorsPolicy");//add it below app.UseRouting();
             app.UseAuthentication();
             app.UseAuthorization();
@@ -88,6 +91,8 @@ namespace API
                 endpoints.MapControllers();
                 //214
                 endpoints.MapHub<ChatHub>("/chat");
+                //256
+                endpoints.MapFallbackToController("Index","Fallback");
             });
         }
     }

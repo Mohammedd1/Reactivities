@@ -69,11 +69,36 @@ namespace API
 
             app.UseMiddleware<ExceptionMiddleware>();
 
+            //261
+            app.UseXContentTypeOptions();
+            app.UseReferrerPolicy(opt => opt.NoReferrer());
+            app.UseXXssProtection(opt => opt.EnabledWithBlockMode());
+            app.UseXfo(opt => opt.Deny());
+            // app.UseCspReportOnly(opt => opt
+            app.UseCsp(opt => opt //modified 262
+           .BlockAllMixedContent()
+           .StyleSources(s => s.Self().CustomSources("https://fonts.googleapis.com"))//modified 262 -allowing fonts from outside our application 
+           .FontSources(s => s.Self().CustomSources("https://fonts.gstatic.com", "data:"))//modified 262
+           .FormActions(s => s.Self())
+           .FrameAncestors(s => s.Self())
+           .ImageSources(s => s.Self().CustomSources("https://res.cloudinary.com"))//modified 262
+           .ScriptSources(s => s.Self().CustomSources("sha256-f9+ZQdWdVlJSMIIKOYpzkJBLj5R4gy1aPzDN7MtriBg="))//modified 262 - unsafe inline script
+           );
+
             if (env.IsDevelopment())
             {
                 //app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1"));
+            }
+            //262
+            else
+            {
+                app.Use(async (context, next) =>
+                {
+                    context.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000");//31536000 represent one year
+                    await next.Invoke();
+                });
             }
 
             app.UseHttpsRedirection();
@@ -92,7 +117,7 @@ namespace API
                 //214
                 endpoints.MapHub<ChatHub>("/chat");
                 //256
-                endpoints.MapFallbackToController("Index","Fallback");
+                endpoints.MapFallbackToController("Index", "Fallback");
             });
         }
     }

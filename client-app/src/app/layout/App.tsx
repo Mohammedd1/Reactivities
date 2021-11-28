@@ -17,6 +17,8 @@ import LoadingComponent from './LoadingComponent';
 import ModalContainer from '../common/modals/ModalContainer';
 import ProfilePage from '../../features/profiles/ProfilePage';
 import PrivateRoute from './PrivateRoute';
+import RegisterSuccess from '../../features/users/RegisterSuccess';
+import ConfirmEmail from '../../features/users/ConfirmEmail';
 
 function App() {
   //loading sppineer is appearing on each compoents,we we will remove it form here and paste it inside activty dashboard 1,2 and 3
@@ -219,6 +221,8 @@ function App() {
                 <Route path='/errors' component={TestErrors} />
                 <Route path='/server-error' component={ServerError} />
                 {/* <Route path='/login' component={LoginForm} /> */}
+                <Route path='/account/registerSuccess' component={RegisterSuccess} />{/*286*/}
+                <Route path='/account/verifyEmail' component={ConfirmEmail} />{/*287*/}
                 <Route component={NotFound} />
               </Switch>
 

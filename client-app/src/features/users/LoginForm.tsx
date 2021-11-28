@@ -14,12 +14,12 @@ export default observer(function LoginForm() {
             // onSubmit={values => userStore.login(values)}
             //Displaying errors in the form
             onSubmit={(values, { setErrors }) => userStore.login(values).catch(error =>
-                setErrors({ error: 'Invalid email or password' }))}
+                setErrors({ error: error.response.data }))} //288
         //setErrors:is a function that allows us to set errors inside our form
         >
             {({ handleSubmit, isSubmitting, errors }) => (
                 <Form className='ui form' onSubmit={handleSubmit} autoComplete='off'>
-                    <Header as='h2' content='Login to Reactivities' color='teal' textAlign='center'/>
+                    <Header as='h2' content='Login to Reactivities' color='teal' textAlign='center' />
                     <MyTextInput name='email' placeholder='Email' />
                     <MyTextInput name='password' placeholder='Password' type='password' />
                     <ErrorMessage

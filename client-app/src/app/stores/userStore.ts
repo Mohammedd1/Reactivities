@@ -56,16 +56,22 @@ export default class UserStore {
 
     register = async (creds: UserFormValues) => {
         try {
-            const user = await agent.Account.register(creds);
-            //set the token
-            store.commonStore.setToken(user.token);
-            this.startRefreshTokenTimer(user);//277
-            // if we want to modify unobservable, then it has to be inside an action.
-            runInAction(() => this.user = user);
-            //push the user into a new location after successfully logged in 
-            history.push('/activities');
-            //close login modal
+            // const user = await agent.Account.register(creds);
+            // //set the token
+            // store.commonStore.setToken(user.token);
+            // this.startRefreshTokenTimer(user);//277
+            // // if we want to modify unobservable, then it has to be inside an action.
+            // runInAction(() => this.user = user);
+            // //push the user into a new location after successfully logged in 
+            // history.push('/activities');
+            // //close login modal
+            // store.modalStore.closeModal();
+
+            //modified 286
+            await agent.Account.register(creds);
+            history.push(`/account/registerSuccess?email=${creds.email}`);
             store.modalStore.closeModal();
+
         }
         catch (error) {
             throw error;

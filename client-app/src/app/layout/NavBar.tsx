@@ -9,7 +9,7 @@ import { useStore } from '../stores/store';
 //updated in our store.
 export default observer(function NavBar() {
     //const{activityStore}=useStore();
-    const { userStore: { user, logout } } = useStore();
+    const { userStore: { user, logout, isLoggedIn } } = useStore();//modified 286
     // return in the below will return a jsx 
     return (
         <Menu inverted fixed='top'>
@@ -19,22 +19,27 @@ export default observer(function NavBar() {
                     <img src='/assets/logo.png' alt='logo' style={{ marginRight: '10px' }} />
                     Reactivities
                 </Menu.Item>
-                <Menu.Item as={NavLink} to='/activities' name='Activities' />
-                <Menu.Item as={NavLink} to='/errors' name='Errors' />
-                <Menu.Item>
-                    {/* <Button onClick={()=>activityStore.openForm()} positive content='Create Activity'/>//positive=green button */}
-                    <Button as={NavLink} to='/createActivity' positive content='Create Activity' />
-                </Menu.Item>
-                <MenuItem position='right'>
-                    <Image src={user?.image || '/assets/user.png'} avatar spaced='right' />
-                    <Dropdown pointing='top left' text={user?.displayName}>
-                        <Dropdown.Menu>
-                            <Dropdown.Item as={Link} to={`/profiles/${user?.username}`}
-                             text='My Profile' icon='user' />
-                            <Dropdown.Item onClick={logout} text='Logout' icon='power' />
-                        </Dropdown.Menu>
-                    </Dropdown>
-                </MenuItem>
+                {/*modified 286*/
+                    isLoggedIn &&
+                    <>
+                        <Menu.Item as={NavLink} to='/activities' name='Activities' />
+                        <Menu.Item as={NavLink} to='/errors' name='Errors' />
+                        <Menu.Item>
+                            {/* <Button onClick={()=>activityStore.openForm()} positive content='Create Activity'/>//positive=green button */}
+                            <Button as={NavLink} to='/createActivity' positive content='Create Activity' />
+                        </Menu.Item>
+                        <MenuItem position='right'>
+                            <Image src={user?.image || '/assets/user.png'} avatar spaced='right' />
+                            <Dropdown pointing='top left' text={user?.displayName}>
+                                <Dropdown.Menu>
+                                    <Dropdown.Item as={Link} to={`/profiles/${user?.username}`}
+                                        text='My Profile' icon='user' />
+                                    <Dropdown.Item onClick={logout} text='Logout' icon='power' />
+                                </Dropdown.Menu>
+                            </Dropdown>
+                        </MenuItem>
+                    </>}
+
             </Container>
         </Menu>
     )

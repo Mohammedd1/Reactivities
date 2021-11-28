@@ -21,9 +21,12 @@ namespace API.Extensions
             servcies.AddIdentityCore<AppUser>(opt =>
             {
                 opt.Password.RequireNonAlphanumeric = false;
+                opt.SignIn.RequireConfirmedEmail=true;//282
             })
             .AddEntityFrameworkStores<DataContext>()
-            .AddSignInManager<SignInManager<AppUser>>();
+            .AddSignInManager<SignInManager<AppUser>>()
+            .AddDefaultTokenProviders();//282
+
 
             //servcies.AddAuthentication();
             // var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("super secret key"));

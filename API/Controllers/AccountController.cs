@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Security.Claims;
+using System.Text;
 using System.Threading.Tasks;
 using API.DTOs;
 using API.Services;
 using Domain;
+using Infrastructure.Email;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
@@ -27,11 +30,13 @@ namespace API.Controllers
         private readonly TokenService _tokenService;
         private readonly IConfiguration _config;
         private readonly HttpClient _httpClient;
+        private readonly EmailSender _emailSender;
 
         public AccountController(UserManager<AppUser> userManager,
         SignInManager<AppUser> signInManager, TokenService tokenService,
-         IConfiguration config)//modified 268
+         IConfiguration config, EmailSender emailSender)//modified 268 - 283
         {
+            _emailSender = emailSender;
             _config = config;
             _tokenService = tokenService;
             _signInManager = signInManager;
@@ -52,26 +57,22 @@ namespace API.Controllers
             .FirstOrDefaultAsync(x => x.Email == loginDto.Email);
 
 
-            if (user == null) return Unauthorized();
+            if (user == null) return Unauthorized("Invalid email");//modified 282
+
+            if (!user.EmailConfirmed) return Unauthorized("Email not confirmed");//282
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false);
 
             if (result.Succeeded)
             {
-                // return new UserDto
-                // {
-                //     DisplayName = user.DisplayName,
-                //     Image = null,
-                //     Token = _tokenService.CreateToken(user),
-                //     Username = user.UserName
-                // };
+
                 await SetRefreshToken(user);//274
 
                 return CreateUserObject(user);
             }
 
             //if not succeeded
-            return Unauthorized();
+            return Unauthorized("Invalid password"); //modified 282
 
         }
         [AllowAnonymous]//274
@@ -101,22 +102,56 @@ namespace API.Controllers
 
             var result = await _userManager.CreateAsync(user, registerDto.Password);
 
-            if (result.Succeeded)
-            {
-                // return new UserDto
-                // {
-                //     DisplayName = user.DisplayName,
-                //     Image = null,
-                //     Token = _tokenService.CreateToken(user),
-                //     Username = user.UserName
-                // };
-                await SetRefreshToken(user);//274
+            if (!result.Succeeded) return BadRequest("Problem registering user"); //modified 283
 
-                return CreateUserObject(user);
-            }
+            //283
+            var origin = Request.Headers["origin"];
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
 
-            return BadRequest("Problem registering user");
+            var verifyUrl = $"{origin}/account/verifyEmail?token={token}&email={user.Email}";
+            var message = $"<p>Please click the below link to verify you emial address:</p><p><a href='{verifyUrl}'>Click to verify email</a></p>";
+            await _emailSender.SendEmailAsync(user.Email, "Please verify email", message);
+
+            return Ok("Registration success - please verify email");
+
         }
+        //284
+        [AllowAnonymous]
+        [HttpPost("verifyEmail")]
+        public async Task<IActionResult> VerifyEmail(string token, string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return Unauthorized();
+            var decodedTokenBytes = WebEncoders.Base64UrlDecode(token);
+            var decodedToken = Encoding.UTF8.GetString(decodedTokenBytes);
+            var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+
+            if (!result.Succeeded) return BadRequest("Could not verify email address");
+
+            return Ok("Email confirmed - you can now login");
+
+        }
+        //284
+        [AllowAnonymous]
+        [HttpPost("resendEmailConfirmationLink")]
+        public async Task<IActionResult> ResendEmailConfirmationLink(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null) return Unauthorized();
+
+            var origin = Request.Headers["origin"];
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+
+            var verifyUrl = $"{origin}/account/verifyEmail?token={token}&email={user.Email}";
+            var message = $"<p>Please click the below link to verify you emial address:</p><p><a href='{verifyUrl}'>Click to verify email</a></p>";
+            
+            await _emailSender.SendEmailAsync(user.Email, "Please verify email", message);
+
+            return Ok("Email verification link resent");
+        }
+
         [Authorize]
         [HttpGet]
         public async Task<ActionResult<UserDto>> GetCurrentUser()
@@ -167,10 +202,14 @@ namespace API.Controllers
                 UserName = (string)fbInfo.id,
                 Photos = new List<Photo> {
                     new Photo {
-                         Id = "fb_" + (string)fbInfo.id, Url = (string)fbInfo.picture.data.url, IsMain = true
+                         Id = "fb_" + (string)fbInfo.id,
+                          Url = (string)fbInfo.picture.data.url,
+                           IsMain = true
                          }}
             };
 
+            user.EmailConfirmed = true;//282
+            
             var result = await _userManager.CreateAsync(user);
 
             if (!result.Succeeded) return BadRequest("Problem creating user account");
@@ -189,7 +228,7 @@ namespace API.Controllers
             var refreshToken = Request.Cookies["refreshToken"];
             var user = await _userManager.Users
             .Include(r => r.RefreshTokens)
-            .Include(p=>p.Photos)//modified 276
+            .Include(p => p.Photos)//modified 276
             .FirstOrDefaultAsync(x => x.UserName == User.FindFirstValue(ClaimTypes.Name));
 
             if (user == null) return Unauthorized();

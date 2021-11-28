@@ -9,6 +9,7 @@ export default class UserStore {
     user: User | null = null;
     fbAccessToken: string | null = null;//270
     fbLoading = false;//270
+    refreshTokenTimeout: any;//277
 
     constructor() {
         makeAutoObservable(this)
@@ -22,6 +23,7 @@ export default class UserStore {
             const user = await agent.Account.login(creds);
             //set the token
             store.commonStore.setToken(user.token);
+            this.startRefreshTokenTimer(user);//277
             // if we want to modify unobservable, then it has to be inside an action.
             runInAction(() => this.user = user);
             //push the user into a new location after successfully logged in 
@@ -44,7 +46,9 @@ export default class UserStore {
     getUser = async () => {
         try {
             const user = await agent.Account.current();
+            store.commonStore.setToken(user.token);//278
             runInAction(() => this.user = user);
+            this.startRefreshTokenTimer(user);//277
         } catch (error) {
 
         }
@@ -55,6 +59,7 @@ export default class UserStore {
             const user = await agent.Account.register(creds);
             //set the token
             store.commonStore.setToken(user.token);
+            this.startRefreshTokenTimer(user);//277
             // if we want to modify unobservable, then it has to be inside an action.
             runInAction(() => this.user = user);
             //push the user into a new location after successfully logged in 
@@ -91,6 +96,7 @@ export default class UserStore {
         const apiLogin = (accessToken: string) => {
             agent.Account.fbLogin(accessToken).then(user => {
                 store.commonStore.setToken(user.token);
+                this.startRefreshTokenTimer(user);//277
                 runInAction(() => {
                     this.user = user;
                     this.fbLoading = false;
@@ -114,5 +120,30 @@ export default class UserStore {
         // window.FB.login(response => {
         //     agent.Account.fbLogin(response.authResponse.accessToken).then(user => console.log(user));//269
         // }, { scope: 'public_profile,email' })
+    }
+    //277
+    refreshToken = async () => {
+        this.stopRefreshTokenTimer();//278
+        try {
+            const user = await agent.Account.refreshToken();
+            runInAction(() => this.user = user);
+            store.commonStore.setToken(user.token);
+            this.startRefreshTokenTimer(user);
+        }
+        catch (error) {
+            console.log(error);
+        }
+    }
+    //277
+    private startRefreshTokenTimer(user: User) {
+        const jwtToken = JSON.parse(atob(user.token.split('.')[1]));
+        const expires = new Date(jwtToken.exp * 1000);
+        const timeout = expires.getTime() - Date.now() - (60 * 1000);
+        this.refreshTokenTimeout = setTimeout(this.refreshToken, timeout);
+    }
+
+    //277
+    private stopRefreshTokenTimer() {
+        clearTimeout(this.refreshTokenTimeout);
     }
 }

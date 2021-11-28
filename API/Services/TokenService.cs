@@ -6,6 +6,7 @@ using System.Text;
 using Domain;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Cryptography;
 
 namespace API.Services
 {
@@ -36,7 +37,7 @@ namespace API.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.Now.AddDays(7),
+                Expires = DateTime.UtcNow.AddMinutes(10),//modified 274 - set to 1 min for testing purposes
                 SigningCredentials = creds
             };
 
@@ -47,5 +48,15 @@ namespace API.Services
             return tokenHnadler.WriteToken(token);
 
         }
+        //274
+        public RefreshToken GenerateRefreshToken()
+        {
+            var randomNumber = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(randomNumber);
+            return new RefreshToken{Token=Convert.ToBase64String(randomNumber)};
+
+        }
+
     }
 }

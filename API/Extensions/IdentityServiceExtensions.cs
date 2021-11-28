@@ -10,6 +10,7 @@ using System.Text;
 using Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using System.Threading.Tasks;
+using System;
 
 namespace API.Extensions
 {
@@ -36,7 +37,9 @@ namespace API.Extensions
                     ValidateIssuerSigningKey = true,//we will compare the key in the token with the one in our server
                     IssuerSigningKey = key,//tell the servre about the key it needs to use
                     ValidateIssuer = false,
-                    ValidateAudience = false
+                    ValidateAudience = false,
+                    ValidateLifetime = true,//274
+                    ClockSkew = TimeSpan.Zero//274
                 };
                 //214 
                 //SingalR Authentication

@@ -3,9 +3,12 @@ import { User, UserFormValues } from '../models/user';
 import agent from '../api/agent';
 import { store } from './store';
 import { history } from '../..';
+import { access } from 'fs';
 
 export default class UserStore {
     user: User | null = null;
+    fbAccessToken: string | null = null;//270
+    fbLoading = false;//270
 
     constructor() {
         makeAutoObservable(this)
@@ -65,11 +68,51 @@ export default class UserStore {
 
     }
     //203
-    setImage=(image:string)=>{
-        if(this.user) this.user.image=image;
+    setImage = (image: string) => {
+        if (this.user) this.user.image = image;
     }
     //207
     setDisplayName = (name: string) => {
         if (this.user) this.user.displayName = name;
+    }
+    //270
+    getFacebookLoginStatus = async () => {
+        window.FB.getLoginStatus(response => {
+            if (response.status === 'connected') {
+                this.fbAccessToken = response.authResponse.accessToken;
+            }
+        })
+    }
+
+    //267
+    facebookLogin = () => {
+        //modified 270
+        this.fbLoading = true;
+        const apiLogin = (accessToken: string) => {
+            agent.Account.fbLogin(accessToken).then(user => {
+                store.commonStore.setToken(user.token);
+                runInAction(() => {
+                    this.user = user;
+                    this.fbLoading = false;
+                })
+                history.push('/activities');
+            }).catch(error => {
+                console.log(error);
+                runInAction(() => this.fbLoading = false);
+            })
         }
+        if (this.fbAccessToken) {
+            apiLogin(this.fbAccessToken);
+        }
+        else {
+            window.FB.login(response => {
+                apiLogin(response.authResponse.accessToken);
+
+            }, { scope: 'public_profile,email' })
+        }
+
+        // window.FB.login(response => {
+        //     agent.Account.fbLogin(response.authResponse.accessToken).then(user => console.log(user));//269
+        // }, { scope: 'public_profile,email' })
+    }
 }

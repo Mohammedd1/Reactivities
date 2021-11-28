@@ -142,7 +142,9 @@ function App() {
       userStore.getUser().finally(() => commonStore.setAppLoaded());
     }
     else {
-      commonStore.setAppLoaded();
+      //commonStore.setAppLoaded();
+      //270
+      userStore.getFacebookLoginStatus().then(()=>commonStore.setAppLoaded());
     }
   }, [commonStore, userStore])
   //Add loading flag

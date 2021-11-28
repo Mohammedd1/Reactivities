@@ -74,15 +74,23 @@ namespace API
             app.UseReferrerPolicy(opt => opt.NoReferrer());
             app.UseXXssProtection(opt => opt.EnabledWithBlockMode());
             app.UseXfo(opt => opt.Deny());
-            // app.UseCspReportOnly(opt => opt
+            //app.UseCspReportOnly(opt => opt
             app.UseCsp(opt => opt //modified 262
            .BlockAllMixedContent()
-           .StyleSources(s => s.Self().CustomSources("https://fonts.googleapis.com"))//modified 262 -allowing fonts from outside our application 
+           .StyleSources(s => s.Self().CustomSources(
+               "https://fonts.googleapis.com",
+               "sha256-yChqzBduCCi4o4xdbXRXh4U/t1rP4UUUMJt+rB+ylUI="))//modified 262 -allowing fonts from outside our application - 271
            .FontSources(s => s.Self().CustomSources("https://fonts.gstatic.com", "data:"))//modified 262
            .FormActions(s => s.Self())
            .FrameAncestors(s => s.Self())
-           .ImageSources(s => s.Self().CustomSources("https://res.cloudinary.com"))//modified 262
-           .ScriptSources(s => s.Self().CustomSources("sha256-f9+ZQdWdVlJSMIIKOYpzkJBLj5R4gy1aPzDN7MtriBg="))//modified 262 - unsafe inline script
+           .ImageSources(s => s.Self().CustomSources(
+               "https://res.cloudinary.com",
+               "https://www.facebook.com",
+               "https://platform-lookaside.fbsbx.com"))//modified 262 -271
+           .ScriptSources(s => s.Self().CustomSources(
+               "sha256-f9+ZQdWdVlJSMIIKOYpzkJBLj5R4gy1aPzDN7MtriBg=",
+               "https://connect.facebook.net",
+               "sha256-3DeEvuzopLMS3xsnxTjSHYUny88R3bTa3WOK3CxQIHI="))//modified 262 - unsafe inline script -271
            );
 
             if (env.IsDevelopment())
